@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">weather</string>
+
+    <string name="all_ok">ok</string>
+    <string name="all_cancel">cancel</string>
+
+    <string name="itemCity_positiveTemperature">+%d°C</string>
+    <string name="itemCity_temperature">%d°C</string>
+
+    <string name="addCity_inputCityName">input city name</string>
+
+    <string name="listCities_checkInternetConnectionMessage">check internet connection</string>
+    <string name="listCities_initializeDataBaseErrorMessage">error initialize data base</string>
+    <string name="listCities_listLadingErrorMessage">error loading cities</string>
+    <string name="listCities_cityLadingErrorMessage">error loading city (id:$1%s)</string>
+
+    <string name="listCities_enableLocationMessage">enable location services</string>
+</resources>

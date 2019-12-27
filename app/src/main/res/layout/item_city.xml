@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable
+            name="city"
+            type="ksayker.weather.model.entity.City" />
+        <variable
+            name="cityClickListener"
+            type="ksayker.weather.view.adapter.CitiesAdapter.OnCityClickListener" />
+        <variable
+            name="isSelected"
+            type="Boolean" />
+    </data>
+
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:onClick="@{(view) -> cityClickListener.onCityClicked(city)}"
+        app:selectItem="@{isSelected}"
+        >
+
+        <TextView
+            android:id="@+id/tvCityName"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/horizontal_margin"
+            android:layout_marginEnd="@dimen/horizontal_margin"
+            android:layout_marginTop="@dimen/vertical_margin"
+            android:layout_marginBottom="@dimen/vertical_margin"
+            android:gravity="start|center_vertical"
+            android:textSize="20sp"
+            android:text="@{city.name}"
+            tools:text="Dnipro"
+            />
+
+        <TextView
+            android:id="@+id/tvCityTemperature"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/horizontal_margin"
+            android:layout_marginEnd="@dimen/horizontal_margin"
+            android:layout_marginTop="@dimen/vertical_margin"
+            android:layout_marginBottom="@dimen/vertical_margin"
+            android:gravity="center"
+            android:textSize="20sp"
+            app:setCityTemperature="@{city}"
+            tools:text="+17"
+            />
+
+    </LinearLayout>
+</layout>
