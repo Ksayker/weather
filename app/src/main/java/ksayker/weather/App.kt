@@ -6,6 +6,7 @@ import ksayker.weather.di.ComponentManager
 
 class App : Application() {
     lateinit var componentManager: ComponentManager
+        private set
 
     override fun onCreate() {
         instance = this

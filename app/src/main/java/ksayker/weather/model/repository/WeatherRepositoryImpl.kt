@@ -1,11 +1,12 @@
 package ksayker.weather.model.repository
 
 import android.content.Context
-import com.google.gson.Gson
+import androidx.room.EmptyResultSetException
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.observers.DisposableSingleObserver
 import ksayker.weather.App
 import ksayker.weather.model.entity.City
 import ksayker.weather.model.repository.db.DataBase
@@ -17,6 +18,8 @@ import javax.inject.Inject
 class WeatherRepositoryImpl(val context: Context) : WeatherRepository {
     @Inject
     lateinit var dataBase: DataBase
+    @Inject
+    lateinit var networkService: NetworkService
 
     init {
         App.getApp()
@@ -28,38 +31,42 @@ class WeatherRepositoryImpl(val context: Context) : WeatherRepository {
     private fun saveCityToDb(city: City) {
         val cityDao = dataBase.cityDao()
 
-        if (cityDao.getById(city.id) == null) {
-            cityDao.insert(city)
-        } else {
-            cityDao.update(city)
+        val observer = object : DisposableSingleObserver<City?>() {
+            override fun onSuccess(t: City) {
+                cityDao.update(city)
+            }
+
+            override fun onError(e: Throwable) {
+                if (e is EmptyResultSetException) {
+                    cityDao.insert(city)
+                }
+            }
         }
+
+        cityDao.getById(city.id)
+            .subscribe(observer)
     }
 
     private fun getWeatherFromDb(): Single<List<City>> {
-        return Single.fromCallable {
-            dataBase.cityDao().getAll()
-        }
+        return dataBase.cityDao().getAll()
     }
 
     private fun getWeatherFromNetwork(placeId: Long): Single<City> {
-        return NetworkService.getInstance().weatherApi.getWeather(
+        return networkService.weatherApi.getWeather(
             placeId,
             NetworkService.API_KEY,
             "metric"
         )
-            .firstElement()
-            .flatMapSingle { json: JsonObject ->
-                Single.fromCallable {
-                    val gsonBuilder = GsonBuilder()
+            .map { json: JsonObject ->
+                val gsonBuilder = GsonBuilder()
 
-                    val deserializer = CityDeserializer()
-                    gsonBuilder.registerTypeAdapter(City::class.java, deserializer)
+                val deserializer = CityDeserializer()
+                gsonBuilder.registerTypeAdapter(City::class.java, deserializer)
 
-                    val customGson = gsonBuilder.create()
-                    val city = customGson.fromJson(json, City::class.java)
+                val customGson = gsonBuilder.create()
+                val city = customGson.fromJson(json, City::class.java)
 
-                    city
-                }
+                city
             }
             .doOnSuccess { saveCityToDb(it) }
     }
@@ -80,8 +87,6 @@ class WeatherRepositoryImpl(val context: Context) : WeatherRepository {
     }
 
     override fun getDataBaseCitiesCount(): Single<Int> {
-        return Single.fromCallable {
-            dataBase.cityDao().getCount()
-        }
+        return dataBase.cityDao().getCount()
     }
 }

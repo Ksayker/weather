@@ -10,18 +10,24 @@ import ksayker.weather.App
 import ksayker.weather.model.entity.City
 import ksayker.weather.model.repository.CitiesRepository
 import ksayker.weather.view.adapter.SingleSelectionCityAdapter
+import ksayker.weather.view.helper.MessageFactory
+import ksayker.weather.view.helper.SingleLiveEvent
 import javax.inject.Inject
 
 
-class AddCityViewModel: ViewModel() {
+class AddCityViewModel: BaseViewModel() {
     private lateinit var citiesAdapter: SingleSelectionCityAdapter
 
     private var initialized = false
 
     @Inject
     lateinit var citiesRepository: CitiesRepository
+    @Inject
+    lateinit var messageFactory: MessageFactory
 
     lateinit var callback: AddCityViewModelCallback
+
+    private var messageObserver: SingleLiveEvent<String> = SingleLiveEvent()
 
     fun init() {
         if (!initialized) {
@@ -46,10 +52,12 @@ class AddCityViewModel: ViewModel() {
 
     fun getCitiesAdapter() = citiesAdapter
 
+    fun getMessageObserver() = messageObserver
+
     fun afterTextChanged(s: Editable?) {
         citiesAdapter.clear()
 
-        if (s?.length ?:0 >= 2) {
+        if (s?.length ?:0 >= 3) {
             val observer = object : DisposableSingleObserver<List<City>>() {
                 override fun onSuccess(cities: List<City>) {
                     cities.forEach {
@@ -58,8 +66,7 @@ class AddCityViewModel: ViewModel() {
                 }
 
                 override fun onError(e: Throwable) {
-                    println("asd")
-                    //todo this
+                    messageObserver.value = messageFactory.getCheckInternetConnectionMessage()
                 }
             }
 
@@ -67,7 +74,13 @@ class AddCityViewModel: ViewModel() {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(observer)
+
+            addDisposable(observer)
         }
+    }
+
+    fun restoreMessage() {
+        messageObserver.value = ""
     }
 
     interface AddCityViewModelCallback {

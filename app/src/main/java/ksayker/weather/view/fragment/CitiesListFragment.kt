@@ -38,6 +38,12 @@ class CitiesListFragment : Fragment() {
         return binding.root
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        viewModel.onDestroy()
+    }
+
     private fun requestLocationPermissions() {
         Handler().post {
             PermissionManager.requestLocationPermission(
@@ -92,7 +98,7 @@ class CitiesListFragment : Fragment() {
         context?.let {
             viewModel = ViewModelProviders.of(this).get(CitiesListViewModel::class.java)
 
-            viewModel.init(MessageFactory(it))
+            viewModel.init()
 
             binding.viewModel = viewModel
         }

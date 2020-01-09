@@ -11,6 +11,8 @@ import ksayker.weather.model.repository.CitiesRepositoryImpl
 import ksayker.weather.model.repository.WeatherRepository
 import ksayker.weather.model.repository.WeatherRepositoryImpl
 import ksayker.weather.model.repository.db.DataBase
+import ksayker.weather.model.repository.rest.NetworkService
+import ksayker.weather.view.helper.MessageFactory
 import javax.inject.Singleton
 
 @Module
@@ -41,5 +43,17 @@ class RepositoryModule {
             DataBase::class.java,
             "database"
         ).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideNetworkService(): NetworkService {
+        return NetworkService()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMessageFactory(context: Context): MessageFactory{
+        return MessageFactory(context)
     }
 }

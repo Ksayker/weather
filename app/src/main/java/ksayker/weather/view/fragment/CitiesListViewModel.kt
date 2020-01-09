@@ -14,8 +14,7 @@ import ksayker.weather.view.adapter.CitiesAdapter
 import ksayker.weather.view.helper.MessageFactory
 import javax.inject.Inject
 
-class CitiesListViewModel: ViewModel(), CitiesAdapter.OnCityClickListener {
-    private lateinit var messageFactory: MessageFactory
+class CitiesListViewModel: BaseViewModel(), CitiesAdapter.OnCityClickListener {
     private lateinit var citiesAdapter: CitiesAdapter
 
     private var clickCityObserver: SingleLiveEvent<City> = SingleLiveEvent()
@@ -27,6 +26,8 @@ class CitiesListViewModel: ViewModel(), CitiesAdapter.OnCityClickListener {
 
     @Inject
     lateinit var repository: WeatherRepository
+    @Inject
+    lateinit var messageFactory: MessageFactory
 
     private fun loadWeather(id: Long) {
         val observer = object : DisposableSingleObserver<City>() {
@@ -46,48 +47,55 @@ class CitiesListViewModel: ViewModel(), CitiesAdapter.OnCityClickListener {
     }
 
     private fun loadWeather() {
+        val observer = object : DisposableSingleObserver<List<City>>() {
+            override fun onSuccess(cities: List<City>) {
+                citiesAdapter.addAllCities(cities)
+            }
+
+            override fun onError(e: Throwable) {
+                messageObserver.value = messageFactory.getListLoadingErrorMessage()
+            }
+        }
+
         repository.getWeather()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : DisposableSingleObserver<List<City>>() {
-                override fun onSuccess(cities: List<City>) {
-                    citiesAdapter.addAllCities(cities)
-                }
+            .subscribe(observer)
 
-                override fun onError(e: Throwable) {
-                    messageObserver.value = messageFactory.getListLoadingErrorMessage()
-                }
-            })
+        addDisposable(observer)
     }
 
     private fun initWeatherData() {
+        val observer = object : DisposableSingleObserver<Int>() {
+            override fun onSuccess(count: Int) {
+                if (count == 0) {
+                    loadWeather(KIEV_ID)
+                    loadWeather(DNIPROPETROVSK_ID)
+                } else {
+                    loadWeather()
+                }
+            }
+
+            override fun onError(e: Throwable) {
+                messageObserver.value = messageFactory.getInitializeDataBaseErrorMessage()
+            }
+        }
+
         repository.getDataBaseCitiesCount()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : DisposableSingleObserver<Int>() {
-                override fun onSuccess(count: Int) {
-                    if (count == 0) {
-                        loadWeather(KIEV_ID)
-                        loadWeather(DNIPROPETROVSK_ID)
-                    } else {
-                        loadWeather()
-                    }
-                }
+            .subscribe(observer)
 
-                override fun onError(e: Throwable) {
-                    messageObserver.value = messageFactory.getInitializeDataBaseErrorMessage()
-                }
-            })
+        addDisposable(observer)
     }
 
-    fun init(messageFactory: MessageFactory) {
+    fun init() {
         if (!initialized) {
             App.getApp()
                 .componentManager
                 .repositoryComponent
                 .inject(this)
 
-            this.messageFactory = messageFactory
             citiesAdapter = CitiesAdapter()
             citiesAdapter.cityClickListener = this
 
